@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="hb-trust-service"/>
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss} [%-5level] ["%thread"] %logger{64} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <springProfile name="prod,test">
+        <property name="LOG_BASE" value="./logs"/>
+        <appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_BASE}/${APP_NAME}/${APP_NAME}_json.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_BASE}/${APP_NAME}/${APP_NAME}_json.log.%d{yyyy-MM-dd}.gz</fileNamePattern>
+                <maxHistory>30</maxHistory>
+            </rollingPolicy>
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <pattern>
+                        <pattern>
+                            {
+                            "timestamp": "%date{\"yyyy-MM-dd'T'HH:mm:ss,SSSZ\"}",
+                            "app_name": "${APP_NAME}",
+                            "log_level": "%level",
+                            "thread": "%thread",
+                            "class_name": "%logger{64}",
+                            "class_method":"%M",
+                            "line_number": "%line",
+                            "message": "%message"
+                            }
+                        </pattern>
+                    </pattern>
+                    <stackTrace>
+                        <throwableConverter
+                                class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                            <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                            <maxLength>2048</maxLength>
+                            <shortenedClassNameLength>20</shortenedClassNameLength>
+                            <rootCauseFirst>true</rootCauseFirst>
+                        </throwableConverter>
+                    </stackTrace>
+                </providers>
+            </encoder>
+        </appender>
+    </springProfile>
+
+    <springProfile name="dev,native">
+        <logger name="com.hb.trust" level="DEBUG"/>
+        <logger name="org.mybatis.spring" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="console"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="test">
+        <logger name="com.hb.trust" level="DEBUG"/>
+        <logger name="org.mybatis.spring" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="rollingFile"/>
+            <appender-ref ref="console"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <logger name="com.hb.trust" level="DEBUG"/>
+        <logger name="org.mybatis.spring" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="rollingFile"/>
+            <appender-ref ref="console"/>
+        </root>
+    </springProfile>
+</configuration>

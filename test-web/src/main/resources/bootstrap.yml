@@ -1,0 +1,31 @@
+spring:
+  profiles:
+    active: ${PROFILE:native}
+  application:
+    name: ${SERVICE_NAME:test-service}
+  mvc:
+    async:
+      request-timeout: 20000
+  cloud:
+
+management:
+  health:
+    redis:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+      cors:
+        allowed-origins: "*"
+        allowed-methods: "*"
+        base-path: /
+  endpoint:
+    health:
+      show-details: ALWAYS
+ribbon:
+  ReadTimeout: 50000
+  ConnectTimeout: 50000
+feign:
+  httpclient:
+    connection-timeout: 50000

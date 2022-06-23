@@ -1,0 +1,84 @@
+spring:
+  #设置全局，Null值不返回到前端
+  jackson:
+    default-property-inclusion: non_null
+
+  datasource:
+    dynamic:
+      druid:
+        # 以下是全局默认值，可以全局更改
+        # 下面为连接池的补充设置，应用到上面所有数据源中
+        # 初始化大小，最小，最大
+        initialSize: 1
+        minIdle: 3
+        maxActive: 100
+        # 配置获取连接等待超时的时间
+        maxWait: 6000
+        # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+        timeBetweenEvictionRunsMillis: 1000
+        # 配置一个连接在池中最小生存的时间，单位是毫秒
+        minEvictableIdleTimeMillis: 30000
+        validationQuery: select 'x' FROM DUAL
+        testWhileIdle: true
+        testOnBorrow: false
+        testOnReturn: false
+        # 打开PSCache，并且指定每个连接上PSCache的大小
+        poolPreparedStatements: true
+        maxPoolPreparedStatementPerConnectionSize: 20
+        # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+        filters: stat,wall,slf4j
+        # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
+        connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      primary: master #设置默认的数据源或者数据源组,默认值即为master
+      strict: true #设置严格模式,默认false不启动. 启动后在未匹配到指定数据源时候会抛出异常,不启动则使用默认数据源.
+      datasource:
+        #数据源主库
+        master:
+          url: jdbc:mysql://127.0.0.1:3306/hb-trust-rc?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8
+          username: root
+          password: password
+          driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  global-config:
+    #主键类型  0:"数据库ID自增", 1:"用户输入ID",2:"全局唯一ID (数字类型唯一ID)", 3:"全局唯一ID UUID";
+    id-type: 0
+    #字段策略 0:"忽略判断",1:"非 NULL 判断"),2:"非空判断"
+    field-strategy: 2
+    db-column-underline: true
+    refresh-mapper: true
+    logic-delete-value: 0
+    logic-not-delete-value: 1
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+
+codeGenerator:
+  frontProject:
+    workspace: /workspaces
+    basePath: /data/src/view
+  backProject:
+    workspace: /workspaces
+    basePath: /data/src/java #D://temp/
+
+param:
+  #账户信息查询地址
+  hbTrustHost: https://api.huobihktrust.com
+  #blockFrost projectId
+  projectId: testnetM14FbrGPJUwp1T3Xo2c0UQt3Ch9CwZ2k
+  #风控clientId
+  riskControlClientId: LOCALHOST
+  #mint sign account mnemonic
+  mintSignAccountMnemonic: 0404A083CB7DE8F9D290AD49DAFEED068197FF47BDB308742938ACBEF919C4C0793ADDA42667CA80403972A6C0A08036365F7CCD53559434C81DF802728815493C78964F8A37F6AC0EE6F3897FE3807CEE2624077F59F4398CE0FE8D5BE65FEE44668C698BF79142559B8CE3A91CD82324BB41EB53AE92537EABEB2B9B2ECA7156AFD54F6B4558BED186B8D7A929CCB0E84F1C7F91D6FFD931C9FCB34E7FCBD86636AE6C19F4940EB5CF691BC965011C1244DD09191E0534F19C8FEBC356E458B673ACDF7FB5766F18AC2AE4E307FD85A1BAF531494572094606F0D8EAE6E7DE3B083B201F4C07FA93440C9A82C70F05982EB6479FDACBC86F
+  #account_get_path
+  accountGetPath: /v1/open/account/get
+
+sso:
+  resource:
+    # 置哪些服务路径需要解除权限控制，比如内部接口
+    permit-matchers:
+      - /druid/**
+
+logging:
+  level:
+    com.hb.trust.mapper.*: DEBUG
