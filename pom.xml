@@ -16,6 +16,7 @@
 
     <properties>
         <java.version>8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-cloud-starter-bootstrap.version>3.0.3</spring-cloud-starter-bootstrap.version>
         <spring-boot-starter-web.version>2.5.8</spring-boot-starter-web.version>
         <spring-boot-starter-validation.version>2.5.8</spring-boot-starter-validation.version>
