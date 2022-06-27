@@ -65,5 +65,25 @@ public class TestController {
             return response;
         }
     }
+    
+    /**
+     * 铸币状态查询
+     *
+     * @param txId
+     * @return
+     */
+    @GetMapping("/mint/{txId}")
+    public Response mintQuery(@PathVariable(name = "txId", required = false)  String txId) {
+        log.info("[风控-铸币查询]入参: {}", txId);
+        try {
+            Response response = iTestService.mintQuery(txId);
+            log.info("[风控-铸币查询]end {}", response);
+            return response;
+        } catch (BusinessException e) {
+            Response response = ResponseFactory.getError(e);
+            log.info("[风控-铸币查询]end {}", response);
+            return response;
+        }
+    }
 
 }
