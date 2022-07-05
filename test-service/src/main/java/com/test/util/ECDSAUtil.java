@@ -8,6 +8,10 @@ package com.test.util;
 
 
 import cn.hutool.core.util.HexUtil;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
@@ -15,11 +19,13 @@ import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.BigIntegers;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
@@ -39,8 +45,8 @@ public class ECDSAUtil {
     private static final String MESSAGE = "e654d31e-7460-4102-be1e-e3379ad85386_1_1_abc";
     private static final String UN_COMPRESS_PUBLIC_KEY_STRING = "0463793c22d8f748b06e27f6ac274cbecc8ab9fb070ca1efb2e81148f6e318ec48f8adccbbc5c214fd5ef9fdf39bbe3784bc76a235c556b601beeb554da8d72179";
     private static final String COMPRESS_PUBLIC_KEY_STRING = "0363793c22d8f748b06e27f6ac274cbecc8ab9fb070ca1efb2e81148f6e318ec48";
-    private static final String SIGNED_MESSAGE = "4a812b78a1b313974ece94a376834777532631e7f39db0376e360aa8afbcfc19135eb32dbe8da667164144104835c0809e2bfb38dfd4f47e2fcc5d40f0142041";
     private static final String SIGNALGORITHMS = "SHA512withECDSA";
+    private static final String PRIVATE_KEY = "458e89fffcbe42a9420dd79115a61640c83c5fb3b83c75076785559999d084b4";
 
     public static void main(String[] args) throws Exception {
         KeyPair keyPair = getKeyPair();
@@ -52,19 +58,37 @@ public class ECDSAUtil {
     }
 
     @Test
-    public void veritySignByPublicKeyStr() throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
+    public void veritySignByPublicKeyStr() throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, SignatureException, InvalidKeyException {
 //        PublicKey pubKey = rawToEncodedECPublicKey(UN_COMPRESS_PUBLIC_KEY_STRING);
         PublicKey pubKey = rawToEncodedECPublicKey(COMPRESS_PUBLIC_KEY_STRING);
-        boolean result = verify(pubKey, "30450221009382ba6655255a62474a8b5978a2e4b52c38f54719a67860ece78f0fa61c043c022003d10363b507d266e46d48bbb9b9a09611ea206d137eaf8ef2c541c1bbf5c6e6", MESSAGE);
+        boolean result = verifyByPublic(pubKey, "f4c94313f946be1173f8504b57cad25d5f8234584dc49b8e91aa4993953fea5a749a54221ef2109be68f80e53977f27a5731360928eeb0714203e05d72a5b626", MESSAGE);
         System.out.println("验证结果：" + result);
     }
 
     @Test
-    public void signByPrivateStrAndVerity() throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, SignatureException, InvalidKeyException {
-        PrivateKey privateKey = getPrivateKeyFromECBigIntAndCurve("458e89fffcbe42a9420dd79115a61640c83c5fb3b83c75076785559999d084b4");
-        PublicKey publicKey = getPublicKeyFromPrivateKey("458e89fffcbe42a9420dd79115a61640c83c5fb3b83c75076785559999d084b4");
-        String sign = sign(privateKey, MESSAGE);
-        boolean result = verify(publicKey, sign, MESSAGE);
+    public void veritySignByPublicKeyString() {
+        boolean result = verifyByPublicString(UN_COMPRESS_PUBLIC_KEY_STRING, "f4c94313f946be1173f8504b57cad25d5f8234584dc49b8e91aa4993953fea5a749a54221ef2109be68f80e53977f27a5731360928eeb0714203e05d72a5b626", MESSAGE);
+        System.out.println("验证结果：" + result);
+    }
+
+    @Test
+    public void signByPrivateStrAndVerityByPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, SignatureException, InvalidKeyException, IOException {
+        PrivateKey privateKey = getPrivateKeyFromECBigIntAndCurve(PRIVATE_KEY);
+        PublicKey publicKey = getPublicKeyFromPrivateKey(PRIVATE_KEY);
+        String sign = signByPrivate(privateKey, MESSAGE);
+        boolean result = verifyByPublic(publicKey, sign, MESSAGE);
+        System.out.println("私钥：" + Base64.getEncoder().encodeToString(privateKey.getEncoded()));
+        System.out.println("签名结果：" + sign);
+        System.out.println("公钥：" + Base64.getEncoder().encodeToString(publicKey.getEncoded()));
+        System.out.println("验证结果：" + result);
+    }
+
+    @Test
+    public void signByPrivateStrAndVerityByPublicString() throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
+        PrivateKey privateKey = getPrivateKeyFromECBigIntAndCurve(PRIVATE_KEY);
+        PublicKey publicKey = getPublicKeyFromPrivateKey(PRIVATE_KEY);
+        String sign = signByPrivateString(PRIVATE_KEY, MESSAGE);
+        boolean result = verifyByPublicString(COMPRESS_PUBLIC_KEY_STRING, sign, MESSAGE);
         System.out.println("私钥：" + Base64.getEncoder().encodeToString(privateKey.getEncoded()));
         System.out.println("签名结果：" + sign);
         System.out.println("公钥：" + Base64.getEncoder().encodeToString(publicKey.getEncoded()));
@@ -83,53 +107,79 @@ public class ECDSAUtil {
     }
 
     /**
-     * 加签
+     * 根据私钥PrivateKehy加签
      *
      * @param privateKey 私钥
      * @param data       数据
      * @return
      */
-    public static String sign(PrivateKey privateKey, String data) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, SignatureException {
+    public static String signByPrivate(PrivateKey privateKey, String data) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         //执行签名
         Signature signature = Signature.getInstance("SHA256withPlain-ECDSA");
         signature.initSign(privateKey);
         signature.update(keccak256String(data));
         byte[] sign = signature.sign();
         return HexUtil.encodeHexStr(sign);
-//        ECDSASigner signer = new ECDSASigner();
-//        X9ECParameters curve = NISTNamedCurves.getByName("P-256");
-//        ECDomainParameters domain = new ECDomainParameters(curve.getCurve(), curve.getG(), curve.getN(), curve.getH());
-//        signer.init(true, new ECPrivateKeyParameters(new BigInteger("458e89fffcbe42a9420dd79115a61640c83c5fb3b83c75076785559999d084b4", 16), domain));
-//        BigInteger[] signature = signer.generateSignature(keccak256String(data));
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        DERSequenceGenerator seq = new DERSequenceGenerator(baos);
-//        seq.addObject(new ASN1Integer(signature[0]));
-//        seq.addObject(new ASN1Integer(signature[1]));
-//        seq.close();
-//        return cn.hutool.core.util.HexUtil.encodeHexStr(baos.toByteArray());
     }
 
     /**
-     * 验签
+     * @Description: 根据私钥字符串签名
+     * @param: privateKey
+     * @param: data
+     * @return: java.lang.String
+     * @Author: huaChao
+     * @Date: 2022/7/5
+     **/
+    public static String signByPrivateString(String privateKey, String data) {
+        ECDSASigner signer = new ECDSASigner();
+        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);
+        ECDomainParameters domain = new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN());
+        signer.init(true, new ECPrivateKeyParameters(new BigInteger(privateKey, 16), domain));
+        BigInteger[] bi = signer.generateSignature(keccak256String(data));
+        byte[] signature = new byte[64];
+        System.arraycopy(BigIntegers.asUnsignedByteArray(32, bi[0]), 0, signature, 0, 32);
+        System.arraycopy(BigIntegers.asUnsignedByteArray(32, bi[1]), 0, signature, 32, 32);
+        return HexUtil.encodeHexStr(signature);
+    }
+
+    /**
+     * 根据公钥PublicKey验签
      *
      * @param publicKey 公钥
      * @param signed    签名
      * @param data      数据
      * @return
      */
-    public static boolean verify(PublicKey publicKey, String signed, String data) {
-        try {
-            //验证签名
-            Signature signature = Signature.getInstance("SHA256withPlain-ECDSA");
-            signature.initVerify(publicKey);
-            signature.update(keccak256String(data));
-            byte[] hex = HexUtil.decodeHex(signed);
-//            byte[] hex = HexUtil.decode("55add3d139d64c0f901eca6994229bb8b6133fad058afa0f8667192d0c18df13cac5949beff70d212071bc45ef6f288d7169b33b3f2553c1c1d7f95ef010b3b0");
-            return signature.verify(hex);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+    public static boolean verifyByPublic(PublicKey publicKey, String signed, String data) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        //验证签名
+        Signature signature = Signature.getInstance("SHA256withPlain-ECDSA");
+        signature.initVerify(publicKey);
+        signature.update(keccak256String(data));
+        byte[] hex = HexUtil.decodeHex(signed);
+        return signature.verify(hex);
+    }
+
+    /**
+     * @Description: 根据公钥字符串验签
+     * @param: publicKey
+     * @param: signed
+     * @param: data
+     * @return: boolean
+     * @Author: huaChao
+     * @Date: 2022/7/5
+     **/
+    public static boolean verifyByPublicString(String publicKey, String signed, String data) {
+        ECDSASigner signer = new ECDSASigner();
+        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);
+        ECDomainParameters domain = new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN());
+        byte[] aaa = HexUtil.decodeHex(publicKey);
+        ECPublicKeyParameters publicKeyParams =
+                new ECPublicKeyParameters(spec.getCurve().decodePoint(aaa), domain);
+        signer.init(false, publicKeyParams);
+        byte[] bbb = HexUtil.decodeHex(signed);
+        BigInteger r = BigIntegers.fromUnsignedByteArray(bbb, 0, 32);
+        BigInteger s = BigIntegers.fromUnsignedByteArray(bbb, 32, 32);
+        return signer.verifySignature(keccak256String(data), r, s);
     }
 
 
