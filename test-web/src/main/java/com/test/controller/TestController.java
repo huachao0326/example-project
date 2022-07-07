@@ -73,7 +73,7 @@ public class TestController {
      * @return
      */
     @GetMapping("/mint/{txId}")
-    public Response mintQuery(@PathVariable(name = "txId", required = false)  String txId) {
+    public Response mintQuery1(@PathVariable(name = "txId", required = false)  String txId) {
         log.info("[风控-铸币查询]入参: {}", txId);
         try {
             Response response = iTestService.mintQuery(txId);
