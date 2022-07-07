@@ -4,10 +4,15 @@ import com.test.enumValidate.EnumValidation;
 import com.test.enums.BlockChainType;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.ToString;
 
+import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.time.Instant;
 
 @Data
+@ToString(callSuper = true)
 public class MintSubmitDtoIn {
 
     /**
@@ -38,5 +43,15 @@ public class MintSubmitDtoIn {
     @ApiModelProperty("客户标识")
     @NotNull(message = "客户标识不能为空")
     public String clientId;
+
+    @ApiModelProperty("time_to_live")
+    @NotNull(message = "time_to_live is null")
+    @Future(message = "invalid time_to_live")
+    private Instant time_to_live;
+
+    @ApiModelProperty("parties")
+    @NotNull(message = "parties is null")
+    @Size(min = 2, max = 2, message = "parties length invalid")
+    private Integer[] parties;
 
 }
