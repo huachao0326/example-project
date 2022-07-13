@@ -15,7 +15,7 @@
     </modules>
 
     <properties>
-        <java.version>8</java.version>
+        <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-cloud-starter-bootstrap.version>3.0.3</spring-cloud-starter-bootstrap.version>
         <spring-boot-starter-web.version>2.5.8</spring-boot-starter-web.version>
@@ -33,6 +33,7 @@
         <hutool-all.version>5.7.22</hutool-all.version>
         <org.web3j.core.version>5.0.0</org.web3j.core.version>
         <jwt.version>0.11.2</jwt.version>
+        <jackson-databind.version>2.12.0</jackson-databind.version>
     </properties>
 
     <dependencies>
@@ -117,6 +118,11 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-databind.version}</version>
         </dependency>
 
 

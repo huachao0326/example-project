@@ -1,10 +1,7 @@
 package com.test.util;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hb.trust.entity.JwtKey;
-import com.hb.trust.mapper.JwtKeyMapper;
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -12,7 +9,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -32,9 +29,6 @@ import java.util.Base64;
 @Slf4j
 @Component
 public class JwtUtils {
-
-    @Resource
-    JwtKeyMapper jwtKeyMapper;
 
     public static final int JWT_AVAILABLE_MINUTE = 10;
 
@@ -90,6 +84,8 @@ public class JwtUtils {
             dataJSON = payloadTree.get("data").toString();
         } catch (JsonProcessingException e) {
             throw new JwtException("decode payload json failed");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         PublicKey jwtPublicKey = null;
@@ -111,18 +107,6 @@ public class JwtUtils {
             String alg = parsed.getHeader().get("alg").toString();
             if (Strings.isEmpty(alg)) {
                 throw new JwtException("alg not set");
-            }
-            Object typ = parsed.getHeader().get("typ");
-            LambdaQueryWrapper<JwtKey> jwtKeyLambdaQueryWrapper = new LambdaQueryWrapper<>();
-            jwtKeyLambdaQueryWrapper.eq(JwtKey::getPublicKey, publicKey);
-            jwtKeyLambdaQueryWrapper.eq(JwtKey::isStatus, Boolean.TRUE);
-            jwtKeyLambdaQueryWrapper.eq(JwtKey::getAlg, alg);
-            if(null != typ){
-                jwtKeyLambdaQueryWrapper.eq(JwtKey::getTyp, typ);
-            }
-            JwtKey jwtKey = jwtUtils.jwtKeyMapper.selectOne(jwtKeyLambdaQueryWrapper);
-            if (null == jwtKey) {
-                throw new JwtException("verify failed: token is not allow");
             }
             return JwtDecoded.builder()
                     .alg(parsed.getHeader().get("alg").toString())

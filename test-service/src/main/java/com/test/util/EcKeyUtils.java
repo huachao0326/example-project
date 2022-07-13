@@ -1,14 +1,13 @@
 package com.test.util;
 
 
+import cn.hutool.core.codec.Base64Decoder;
 import org.apache.tomcat.util.codec.binary.Base64;
-import sun.misc.BASE64Decoder;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NullCipher;
-import java.io.IOException;
 import java.security.*;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -138,14 +137,12 @@ public class EcKeyUtils {
         PublicKey publicKey = null;
         try {
             X509EncodedKeySpec bobPubKeySpec = new X509EncodedKeySpec(
-                    new BASE64Decoder().decodeBuffer(publicKeyString));
+                    (new Base64Decoder()).decode(publicKeyString));
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
             publicKey = keyFactory.generatePublic(bobPubKeySpec);
         } catch (InvalidKeySpecException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
         return publicKey;
@@ -160,15 +157,13 @@ public class EcKeyUtils {
     public static PrivateKey strToPrivateKey(String privateKeyString) {
         PrivateKey privateKey = null;
         try {
-            byte[] keyBytes = (new BASE64Decoder()).decodeBuffer(privateKeyString);
+            byte[] keyBytes = (new Base64Decoder()).decode(privateKeyString);
             PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(keyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
             privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
         } catch (InvalidKeySpecException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
         return privateKey;
