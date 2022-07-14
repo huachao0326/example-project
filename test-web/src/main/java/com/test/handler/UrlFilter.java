@@ -3,6 +3,9 @@ package com.test.handler;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.test.enums.RoomType;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.*;
@@ -10,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @description:
@@ -17,6 +21,7 @@ import java.io.IOException;
  * @createDate: 2022/7/6
  */
 @Component
+@Slf4j
 public class UrlFilter implements Filter {
 
     @Override
@@ -24,19 +29,32 @@ public class UrlFilter implements Filter {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
         StringBuffer urlBuffer = httpServletRequest.getRequestURL();
-        if(urlBuffer.toString().endsWith("/room")){
+        if (urlBuffer.toString().endsWith("/room")) {
             String postContent = getBody(httpServletRequest);
-            httpServletRequest = new BodyRequestWrapper(httpServletRequest,postContent);
+            httpServletRequest = new BodyRequestWrapper(httpServletRequest, postContent);
             JSONObject tokenObject = JSON.parseObject(postContent);
-            if("keygen".equals(tokenObject.getString("type"))){
-                httpServletRequest.getRequestDispatcher("/room/keygen").forward(httpServletRequest,httpServletResponse);
+            String type = tokenObject.getString("type");
+            JSONObject returnInfo = new JSONObject();
+            if (StringUtils.isBlank(type) || null == RoomType.getRoomTypeConstant(type)) {
+                returnInfo.put("status", "error");
+                returnInfo.put("err_msg", StringUtils.isEmpty(type) ? "type is null" : "invalid type");
+                servletResponse.setCharacterEncoding("UTF-8");
+                servletResponse.setContentType("application/json; charset=utf-8");
+                PrintWriter writer = servletResponse.getWriter();
+                writer.print(JSON.toJSONString(returnInfo));
                 return;
-            }else{
-                httpServletRequest.getRequestDispatcher("/room/sign").forward(httpServletRequest,httpServletResponse);
+            } else if ("keygen".equals(tokenObject.getString("type"))) {
+                httpServletRequest.getRequestDispatcher("/room/keygen").forward(httpServletRequest, httpServletResponse);
+                return;
+            } else if ("sign".equals(tokenObject.getString("type"))) {
+                httpServletRequest.getRequestDispatcher("/room/sign").forward(httpServletRequest, httpServletResponse);
+                return;
+            } else if ("reconstruct".equals(tokenObject.getString("type"))) {
+                httpServletRequest.getRequestDispatcher("/room/reconstruct").forward(httpServletRequest, httpServletResponse);
                 return;
             }
         }
-        filterChain.doFilter(servletRequest,servletResponse);
+        filterChain.doFilter(servletRequest, servletResponse);
     }
 
     private String getBody(HttpServletRequest servletRequest) throws IOException {
