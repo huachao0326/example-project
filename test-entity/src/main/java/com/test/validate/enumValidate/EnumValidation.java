@@ -1,4 +1,4 @@
-package com.test.enumValidate;
+package com.test.validate.enumValidate;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;

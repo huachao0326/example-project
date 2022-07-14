@@ -1,6 +1,6 @@
 package com.test.dto;
 
-import com.test.enumValidate.EnumValidation;
+import com.test.validate.enumValidate.EnumValidation;
 import com.test.enums.BlockChainType;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
