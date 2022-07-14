@@ -2,6 +2,8 @@ package com.test.dto;
 
 import com.test.validate.enumValidate.EnumValidation;
 import com.test.enums.BlockChainType;
+import com.test.validate.group.MyValidateGroup;
+import com.test.validate.stringArrayValidate.StringArrayValidation;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.ToString;
@@ -53,5 +55,14 @@ public class MintSubmitDtoIn {
     @NotNull(message = "parties is null")
     @Size(min = 2, max = 2, message = "parties length invalid")
     private Integer[] parties;
+
+    /**
+     * public_key
+     */
+    @ApiModelProperty("public_key")
+    @NotNull(message = "public_key is null")
+    @Size(min = 2, message = "public_key length invalid")
+    @StringArrayValidation(groups = MyValidateGroup.class, message = "invalid public_key")
+    private String[] public_key;
 
 }

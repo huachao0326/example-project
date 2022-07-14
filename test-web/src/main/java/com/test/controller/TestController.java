@@ -5,6 +5,7 @@ import com.test.exception.BusinessException;
 import com.test.response.Response;
 import com.test.response.ResponseFactory;
 import com.test.service.ITestService;
+import com.test.validate.group.SortValidateGroup;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class TestController {
      */
     @PostMapping("/mint/submit")
     @Operation(summary = "铸币提交")
-    public Response mintSubmit(@Validated @RequestBody MintSubmitDtoIn request) {
+    public Response mintSubmit(@Validated(value = SortValidateGroup.class) @RequestBody MintSubmitDtoIn request) {
         log.info("[风控-铸币提交]入参: {}", request);
         Response response = iTestService.mintSubmit(request);
         log.info("[风控-铸币提交]end {}", response);
@@ -65,7 +66,7 @@ public class TestController {
             return response;
         }
     }
-    
+
     /**
      * 铸币状态查询
      *
@@ -73,7 +74,7 @@ public class TestController {
      * @return
      */
     @GetMapping("/mint/{txId}")
-    public Response mintQuery1(@PathVariable(name = "txId", required = false)  String txId) {
+    public Response mintQuery1(@PathVariable(name = "txId", required = false) String txId) {
         log.info("[风控-铸币查询]入参: {}", txId);
         try {
             Response response = iTestService.mintQuery(txId);
